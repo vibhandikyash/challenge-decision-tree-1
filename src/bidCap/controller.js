@@ -3,8 +3,7 @@ const BidCapStrategy = require('./BidCapStrategy');
 exports.getBidCapValue = async (req, res) => {
   try {
 
-    const bidCapObj = new BidCapStrategy(req.body);
-    const bidCap = bidCapObj.getBestBigCap();
+    const bidCap = BidCapStrategy(req.body);
 
     const data = { bidCap };
     res.send({ success: true, code: 200, data });

@@ -11,72 +11,65 @@ const BID_CAP_TYPE = {
 
 }
 
-module.exports = class BidCapStrategy {
-  constructor({ rpcAlpha, rpcBeta, ebRpc, net, nonSocialClicks, nonSocialClicksCutOff, socialClicks, socialClicksCutOff, currentBidCap, factor }) {
-    this.rpcAlpha = rpcAlpha;
-    this.rpcBeta = rpcBeta;
-    this.ebRpc = ebRpc;
-    this.net = net;
-    this.nonSocialClicks = nonSocialClicks;
-    this.nonSocialClicksCutOff = nonSocialClicksCutOff;
-    this.socialClicks = socialClicks;
-    this.socialClicksCutOff = socialClicksCutOff;
-    this.currentBidCap = currentBidCap;
-    this.factor = factor;
 
-    // find avg.
-    this.avgAlphaBeta = (this.rpcAlpha + this.rpcBeta) / 2;
-  }
+function BidCapStrategy({ rpcAlpha, rpcBeta, ebRpc, net, nonSocialClicks, nonSocialClicksCutOff, socialClicks, socialClicksCutOff, currentBidCap, factor }) {
+  // find avg.
+  const avgAlphaBeta = (rpcAlpha + rpcBeta) / 2;
 
-  getBestBigCap() {
-    let result = this.currentBidCap;
-    const firstStep = (this.rpcAlpha > 2.5 && this.net > 30);
-    const secondStep = this.compareClick();
-    const thirdStepMax = this.findMinMax(TYPE.MAX, secondStep);
-    const thirdStepMin = this.findMinMax(TYPE.MIN, secondStep);
+  const getBestBigCap = () => {
+    let result = currentBidCap;
+    const firstStep = (rpcAlpha > 2.5 && net > 30);
+    const secondStep = compareClick();
+    const thirdStepMax = findMinMax(TYPE.MAX, secondStep);
+    const thirdStepMin = findMinMax(TYPE.MIN, secondStep);
 
     if (firstStep) {
       if (secondStep) {
-        result = thirdStepMax ? this.calculateBidCap(BID_CAP_TYPE.INCREASE, 1) : this.calculateBidCap(BID_CAP_TYPE.DECREASE, 4);
+        result = thirdStepMax ? calculateBidCap(BID_CAP_TYPE.INCREASE, 1) : calculateBidCap(BID_CAP_TYPE.DECREASE, 4);
       } else {
-        result = thirdStepMax ? this.calculateBidCap(BID_CAP_TYPE.INCREASE, 1) : this.calculateBidCap(BID_CAP_TYPE.MAX);
+        result = thirdStepMax ? calculateBidCap(BID_CAP_TYPE.INCREASE, 1) : calculateBidCap(BID_CAP_TYPE.MAX);
       }
     } else {
       if (secondStep) {
-        result = thirdStepMin ? this.calculateBidCap(BID_CAP_TYPE.INCREASE, 5) : this.calculateBidCap(BID_CAP_TYPE.DECREASE, 5);
+        result = thirdStepMin ? calculateBidCap(BID_CAP_TYPE.INCREASE, 5) : calculateBidCap(BID_CAP_TYPE.DECREASE, 5);
       } else {
-        result = thirdStepMin ? this.calculateBidCap(BID_CAP_TYPE.INCREASE, 2) : this.calculateBidCap(BID_CAP_TYPE.MIN);
+        result = thirdStepMin ? calculateBidCap(BID_CAP_TYPE.INCREASE, 2) : calculateBidCap(BID_CAP_TYPE.MIN);
       }
     }
     return result;
   }
 
-  compareClick() {
-    return ((this.socialClicks > this.socialClicksCutOff) && (this.nonSocialClicks > this.nonSocialClicksCutOff)) ? true : false;
+  const compareClick = () => {
+    return ((socialClicks > socialClicksCutOff) && (nonSocialClicks > nonSocialClicksCutOff)) ? true : false;
   }
 
-  findMinMax(MATH_TYPE, previousResult) {
+  const findMinMax = (MATH_TYPE, previousResult) => {
     if (previousResult) {
-      return (this.currentBidCap < Math[MATH_TYPE](this.ebRpc * this.factor, this.avgAlphaBeta)) ? true : false;
+      return (currentBidCap < Math[MATH_TYPE](ebRpc * factor, avgAlphaBeta)) ? true : false;
     } else {
-      return (this.currentBidCap < Math[MATH_TYPE](this.ebRpc, this.avgAlphaBeta)) ? true : false;
+      return (currentBidCap < Math[MATH_TYPE](ebRpc, avgAlphaBeta)) ? true : false;
     }
   }
 
-  calculateBidCap(type, per = null) {
+  const calculateBidCap = (type, per = null) => {
     if (type === BID_CAP_TYPE.INCREASE) {
-      return this.currentBidCap += (this.currentBidCap * per / 100)
+      return currentBidCap += (currentBidCap * per / 100)
     }
     if (type === BID_CAP_TYPE.DECREASE) {
-      return this.currentBidCap -= (this.currentBidCap * per / 100)
+      return currentBidCap -= (currentBidCap * per / 100)
     }
     if (type === BID_CAP_TYPE.MAX) {
-      return Math.max(this.ebRpc, this.avgAlphaBeta)
+      return Math.max(ebRpc, avgAlphaBeta)
     }
     if (type === BID_CAP_TYPE.MIN) {
-      return Math.min(this.ebRpc, this.avgAlphaBeta)
+      return Math.min(ebRpc, avgAlphaBeta)
     }
   }
 
+return getBestBigCap();
 
 }
+
+
+module.exports = BidCapStrategy
+
